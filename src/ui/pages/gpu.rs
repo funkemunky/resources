@@ -293,10 +293,9 @@ impl ResGPU {
             None
         };
 
-        let vram_percentage_string = used_vram_fraction
-            .as_ref()
-            .map(|fraction| format!("{} %", (fraction * 100.0).round()))
-            .unwrap_or(i18n("N/A"));
+        let vram_percentage_string = used_vram_fraction.as_ref().map_or(i18n("N/A"), |fraction| {
+            format!("{} %", (fraction * 100.0).round())
+        });
 
         let vram_subtitle = if let (Ok(total_vram), Ok(used_vram)) = (&total_vram, &used_vram) {
             format!(

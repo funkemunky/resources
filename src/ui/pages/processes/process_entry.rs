@@ -172,15 +172,13 @@ impl ProcessEntry {
         self.set_read_total(
             process_item
                 .read_total
-                .map(|read_total| read_total as i64)
-                .unwrap_or(-1),
+                .map_or(-1, |read_total| read_total as i64),
         );
         self.set_write_speed(process_item.write_speed.unwrap_or(-1.0));
         self.set_write_total(
             process_item
                 .write_total
-                .map(|write_total| write_total as i64)
-                .unwrap_or(-1),
+                .map_or(-1, |write_total| write_total as i64),
         );
         self.imp().process_item.replace(Some(process_item));
     }

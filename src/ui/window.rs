@@ -222,11 +222,11 @@ impl MainWindow {
         imp.memory.init();
 
         if SETTINGS.show_search_on_start() {
-            imp.processes.toggle_search()
+            imp.processes.toggle_search();
         }
 
         if SETTINGS.show_search_on_start() {
-            imp.applications.toggle_search()
+            imp.applications.toggle_search();
         }
 
         let main_context = MainContext::default();
@@ -234,7 +234,7 @@ impl MainWindow {
             let imp = this.imp();
 
             {
-                *imp.apps_context.lock().await = AppsContext::new().await;
+                *imp.apps_context.lock().await = AppsContext::new();
             }
 
             let cpu_info = cpu::cpu_info()
@@ -277,7 +277,7 @@ impl MainWindow {
                 loop {
                     let _ = imp.cpu.refresh_page().await;
 
-                    let _ = imp.memory.refresh_page().await;
+                    let _ = imp.memory.refresh_page();
 
                     if let Ok(gpu_pages) = imp.gpu_pages.try_borrow() {
                         for gpu_page_toolbar in gpu_pages.iter() {

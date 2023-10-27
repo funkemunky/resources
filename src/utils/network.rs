@@ -117,8 +117,7 @@ impl NetworkInterface {
                 // this requires systemd's PredictableNetworkInterfaceNames to be active,
                 // otherwise it's (probably) just going to be `InterfaceType::Other`
                 "bn" => InterfaceType::Bluetooth,
-                "eth" => InterfaceType::Ethernet,
-                "en" => InterfaceType::Ethernet,
+                "eth" | "en" => InterfaceType::Ethernet,
                 "ib" => InterfaceType::InfiniBand,
                 "sl" => InterfaceType::Slip,
                 "veth" => InterfaceType::VirtualEthernet,

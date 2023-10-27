@@ -77,7 +77,7 @@ impl Settings {
             f(
                 TemperatureUnit::from_str(settings.string("temperature-unit").as_str())
                     .unwrap_or_default(),
-            )
+            );
         })
     }
 
@@ -91,7 +91,7 @@ impl Settings {
 
     pub fn connect_base<F: Fn(Base) + 'static>(&self, f: F) -> glib::SignalHandlerId {
         self.connect_changed(Some("base"), move |settings, _key| {
-            f(Base::from_str(settings.string("base").as_str()).unwrap_or_default())
+            f(Base::from_str(settings.string("base").as_str()).unwrap_or_default());
         })
     }
 
@@ -111,7 +111,7 @@ impl Settings {
             f(
                 RefreshSpeed::from_str(settings.string("refresh-speed").as_str())
                     .unwrap_or_default(),
-            )
+            );
         })
     }
 
@@ -125,7 +125,7 @@ impl Settings {
 
     pub fn connect_window_width<F: Fn(i32) + 'static>(&self, f: F) -> glib::SignalHandlerId {
         self.connect_changed(Some("window-width"), move |settings, _key| {
-            f(settings.int("window-width"))
+            f(settings.int("window-width"));
         })
     }
 
@@ -139,7 +139,7 @@ impl Settings {
 
     pub fn connect_window_height<F: Fn(i32) + 'static>(&self, f: F) -> glib::SignalHandlerId {
         self.connect_changed(Some("window-height"), move |settings, _key| {
-            f(settings.int("window-width"))
+            f(settings.int("window-width"));
         })
     }
 
@@ -153,7 +153,7 @@ impl Settings {
 
     pub fn connect_maximized<F: Fn(bool) + 'static>(&self, f: F) -> glib::SignalHandlerId {
         self.connect_changed(Some("is-maximized"), move |settings, _key| {
-            f(settings.boolean("is-maximized"))
+            f(settings.boolean("is-maximized"));
         })
     }
 
@@ -170,7 +170,7 @@ impl Settings {
         f: F,
     ) -> glib::SignalHandlerId {
         self.connect_changed(Some("show-search-on-start"), move |settings, _key| {
-            f(settings.boolean("show-search-on-start"))
+            f(settings.boolean("show-search-on-start"));
         })
     }
 
@@ -187,7 +187,7 @@ impl Settings {
         f: F,
     ) -> glib::SignalHandlerId {
         self.connect_changed(Some("show-virtual-drives"), move |settings, _key| {
-            f(settings.boolean("show-virtual-drives"))
+            f(settings.boolean("show-virtual-drives"));
         })
     }
 
@@ -222,7 +222,7 @@ impl Settings {
 
     pub fn connect_sidebar_details<F: Fn(bool) + 'static>(&self, f: F) -> glib::SignalHandlerId {
         self.connect_changed(Some("sidebar-details"), move |settings, _key| {
-            f(settings.boolean("sidebar-details"))
+            f(settings.boolean("sidebar-details"));
         })
     }
 
@@ -236,7 +236,7 @@ impl Settings {
 
     pub fn connect_network_bits<F: Fn(bool) + 'static>(&self, f: F) -> glib::SignalHandlerId {
         self.connect_changed(Some("network-bits"), move |settings, _key| {
-            f(settings.boolean("network-bits"))
+            f(settings.boolean("network-bits"));
         })
     }
 
@@ -250,7 +250,7 @@ impl Settings {
 
     pub fn connect_apps_show_memory<F: Fn(bool) + 'static>(&self, f: F) -> glib::SignalHandlerId {
         self.connect_changed(Some("apps-show-memory"), move |settings, _key| {
-            f(settings.boolean("apps-show-memory"))
+            f(settings.boolean("apps-show-memory"));
         })
     }
 
@@ -264,7 +264,7 @@ impl Settings {
 
     pub fn connect_apps_show_cpu<F: Fn(bool) + 'static>(&self, f: F) -> glib::SignalHandlerId {
         self.connect_changed(Some("apps-show-cpu"), move |settings, _key| {
-            f(settings.boolean("apps-show-cpu"))
+            f(settings.boolean("apps-show-cpu"));
         })
     }
 
@@ -284,7 +284,7 @@ impl Settings {
         f: F,
     ) -> glib::SignalHandlerId {
         self.connect_changed(Some("apps-show-drive-read-speed"), move |settings, _key| {
-            f(settings.boolean("apps-show-drive-read-speed"))
+            f(settings.boolean("apps-show-drive-read-speed"));
         })
     }
 
@@ -304,7 +304,7 @@ impl Settings {
         f: F,
     ) -> glib::SignalHandlerId {
         self.connect_changed(Some("apps-show-drive-read-total"), move |settings, _key| {
-            f(settings.boolean("apps-show-drive-read-total"))
+            f(settings.boolean("apps-show-drive-read-total"));
         })
     }
 
@@ -360,7 +360,7 @@ impl Settings {
 
     pub fn connect_processes_show_id<F: Fn(bool) + 'static>(&self, f: F) -> glib::SignalHandlerId {
         self.connect_changed(Some("processes-show-id"), move |settings, _key| {
-            f(settings.boolean("processes-show-id"))
+            f(settings.boolean("processes-show-id"));
         })
     }
 
@@ -377,7 +377,7 @@ impl Settings {
         f: F,
     ) -> glib::SignalHandlerId {
         self.connect_changed(Some("processes-show-user"), move |settings, _key| {
-            f(settings.boolean("processes-show-user"))
+            f(settings.boolean("processes-show-user"));
         })
     }
 
@@ -394,7 +394,7 @@ impl Settings {
         f: F,
     ) -> glib::SignalHandlerId {
         self.connect_changed(Some("processes-show-memory"), move |settings, _key| {
-            f(settings.boolean("processes-show-memory"))
+            f(settings.boolean("processes-show-memory"));
         })
     }
 
@@ -408,7 +408,7 @@ impl Settings {
 
     pub fn connect_processes_show_cpu<F: Fn(bool) + 'static>(&self, f: F) -> glib::SignalHandlerId {
         self.connect_changed(Some("processes-show-cpu"), move |settings, _key| {
-            f(settings.boolean("processes-show-cpu"))
+            f(settings.boolean("processes-show-cpu"));
         })
     }
 
@@ -506,7 +506,7 @@ impl Settings {
 
     pub fn connect_show_logical_cpus<F: Fn(bool) + 'static>(&self, f: F) -> glib::SignalHandlerId {
         self.connect_changed(Some("show-logical-cpus"), move |settings, _key| {
-            f(settings.boolean("show-logical-cpus"))
+            f(settings.boolean("show-logical-cpus"));
         })
     }
 }

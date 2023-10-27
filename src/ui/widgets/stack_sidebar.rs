@@ -143,13 +143,13 @@ impl ResStackSidebar {
                 }),
             );
 
-            if !child.property::<bool>("uses_progress_bar") {
-                sidebar_item.set_progress_bar_visible(false);
-            } else {
+            if child.property::<bool>("uses_progress_bar") {
                 child
                     .bind_property("usage", &sidebar_item, "usage")
                     .sync_create()
                     .build();
+            } else {
+                sidebar_item.set_progress_bar_visible(false);
             }
 
             let row = gtk::ListBoxRow::builder()

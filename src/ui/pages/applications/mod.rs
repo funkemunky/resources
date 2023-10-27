@@ -454,10 +454,10 @@ impl ResApplications {
         SETTINGS
             .connect_apps_show_drive_read_total(move |visible| read_total_col.set_visible(visible));
         SETTINGS.connect_apps_show_drive_write_speed(move |visible| {
-            write_speed_col.set_visible(visible)
+            write_speed_col.set_visible(visible);
         });
         SETTINGS.connect_apps_show_drive_write_total(move |visible| {
-            write_total_col.set_visible(visible)
+            write_total_col.set_visible(visible);
         });
 
         column_view.set_enable_rubberband(true);

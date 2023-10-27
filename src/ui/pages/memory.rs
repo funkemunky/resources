@@ -226,7 +226,7 @@ impl ResMemory {
             }));
     }
 
-    pub async fn refresh_page(&self) -> Result<()> {
+    pub fn refresh_page(&self) -> Result<()> {
         let imp = self.imp();
 
         let total_mem = get_total_memory()

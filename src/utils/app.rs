@@ -14,11 +14,11 @@ use super::process::{Process, ProcessAction, ProcessItem};
 static DATA_DIRS: Lazy<Vec<PathBuf>> = Lazy::new(|| {
     let home = std::env::var("HOME").unwrap_or_else(|_| "/".to_string());
     let mut data_dirs: Vec<PathBuf> = std::env::var("XDG_DATA_DIRS")
-        .unwrap_or_else(|_| format!("/usr/share:{}/.local/share", home))
+        .unwrap_or_else(|_| format!("/usr/share:{home}/.local/share"))
         .split(':')
         .map(PathBuf::from)
         .collect();
-    data_dirs.push(PathBuf::from(format!("{}/.local/share", home)));
+    data_dirs.push(PathBuf::from(format!("{home}/.local/share")));
     data_dirs
 });
 
@@ -221,7 +221,7 @@ impl AppsContext {
     /// Creates a new `AppsContext` object, this operation is quite expensive
     /// so try to do it only one time during the lifetime of the program.
     /// Please call refresh() immediately after this function.
-    pub async fn new() -> AppsContext {
+    pub fn new() -> AppsContext {
         let apps: HashMap<String, App> = App::all()
             .into_iter()
             .map(|app| (app.id.clone(), app))
@@ -256,26 +256,22 @@ impl AppsContext {
                 .find(|a| {
                     // ↓ probably most expensive lookup, therefore only last resort: look for whether the process' commandline
                     //   can be found in the apps' commandline
-                    a.commandline
-                        .as_ref()
-                        .map(|app_commandline| {
-                            let app_executable_name = app_commandline
-                                .split(' ') // filter any arguments (e. g. from "/usr/bin/firefox %u" to "/usr/bin/firefox")
-                                .nth(0)
-                                .unwrap_or_default()
-                                .split('/') // filter the executable path (e. g. from "/usr/bin/firefox" to "firefox")
-                                .nth_back(0)
-                                .unwrap_or_default();
-                            app_commandline == &process.executable_path
-                                || app_executable_name == process.executable_name
-                                || KNOWN_EXECUTABLE_NAME_EXCEPTIONS
-                                    .get(&process.executable_name)
-                                    .map(|sub_executable_name| {
-                                        sub_executable_name == app_executable_name
-                                    })
-                                    .unwrap_or(false)
-                        })
-                        .unwrap_or(false)
+                    a.commandline.as_ref().is_some_and(|app_commandline| {
+                        let app_executable_name = app_commandline
+                            .split(' ') // filter any arguments (e. g. from "/usr/bin/firefox %u" to "/usr/bin/firefox")
+                            .nth(0)
+                            .unwrap_or_default()
+                            .split('/') // filter the executable path (e. g. from "/usr/bin/firefox" to "firefox")
+                            .nth_back(0)
+                            .unwrap_or_default();
+                        app_commandline == &process.executable_path
+                            || app_executable_name == process.executable_name
+                            || KNOWN_EXECUTABLE_NAME_EXCEPTIONS
+                                .get(&process.executable_name)
+                                .is_some_and(|sub_executable_name| {
+                                    sub_executable_name == app_executable_name
+                                })
+                    })
                 })
                 .map(|app| app.id.clone())
         }
@@ -394,7 +390,7 @@ impl AppsContext {
 
         let system_read_speed = self
             .system_processes_iter()
-            .filter_map(|process| process.read_speed())
+            .filter_map(Process::read_speed)
             .sum();
 
         let system_read_total = self.read_bytes_from_dead_processes
@@ -405,7 +401,7 @@ impl AppsContext {
 
         let system_write_speed = self
             .system_processes_iter()
-            .filter_map(|process| process.write_speed())
+            .filter_map(Process::write_speed)
             .sum();
 
         let system_write_total = self.write_bytes_from_dead_processes

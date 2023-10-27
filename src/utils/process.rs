@@ -77,26 +77,25 @@ impl Process {
                 .drain(..)
                 .map(Self::from_process_data)
                 .collect());
-        } else {
-            let vec: Arc<Mutex<Vec<ProcessData>>> = Arc::new(Mutex::new(Vec::new()));
-
-            let mut handles = vec![];
-            for entry in glob("/proc/[0-9]*/").context("unable to glob")?.flatten() {
-                let vec = Arc::clone(&vec);
-
-                let handle = async_std::task::spawn(async move {
-                    if let Ok(process_data) = ProcessData::try_from_path(entry).await {
-                        vec.lock().await.push(process_data);
-                    }
-                });
-
-                handles.push(handle);
-            }
-            join_all(handles).await;
-
-            let mut vec = vec.lock().await;
-            return Ok(vec.drain(..).map(Self::from_process_data).collect());
         }
+        let vec: Arc<Mutex<Vec<ProcessData>>> = Arc::new(Mutex::new(Vec::new()));
+
+        let mut handles = vec![];
+        for entry in glob("/proc/[0-9]*/").context("unable to glob")?.flatten() {
+            let vec = Arc::clone(&vec);
+
+            let handle = async_std::task::spawn(async move {
+                if let Ok(process_data) = ProcessData::try_from_path(entry).await {
+                    vec.lock().await.push(process_data);
+                }
+            });
+
+            handles.push(handle);
+        }
+        join_all(handles).await;
+
+        let mut vec = vec.lock().await;
+        return Ok(vec.drain(..).map(Self::from_process_data).collect());
     }
 
     fn from_process_data(process_data: ProcessData) -> Self {
