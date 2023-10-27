@@ -221,67 +221,44 @@ impl ResGPU {
         let imp = self.imp();
         let gpu = imp.gpu.get().with_context(|| "GPU not initialized")?;
 
-        let gpu_usage_fraction = gpu.usage().await.map(|usage| (usage as f64) / 100.0);
-        let usage_percentage_string = gpu_usage_fraction
+        let gpu_usage = gpu.usage().await;
+        let usage_percentage_string = gpu_usage
             .as_ref()
-            .map(|fraction| format!("{} %", (fraction * 100.0).round()))
+            .map(|usage| format!("{usage} %"))
             .unwrap_or(i18n("N/A"));
 
         imp.gpu_usage.set_subtitle(&usage_percentage_string);
-        imp.gpu_usage
-            .graph()
-            .push_data_point(*gpu_usage_fraction.as_ref().unwrap_or(&0.0));
+        imp.gpu_usage.graph().push_data_point(
+            gpu_usage
+                .as_ref()
+                .map(|usage| (*usage as f64) / 100.0)
+                .unwrap_or(0.0),
+        );
         imp.gpu_usage.graph().set_visible(true);
 
-        let encoder_usage_fraction = gpu.encode_usage().await.map(|usage| (usage as f64) / 100.0);
-        let decoder_usage_fraction = gpu.decode_usage().await.map(|usage| (usage as f64) / 100.0);
+        let encoder_usage_fraction = gpu.encode_usage().await;
+        let decoder_usage_fraction = gpu.decode_usage().await;
         if let (Ok(encoder_usage), Ok(decoder_usage)) =
             (encoder_usage_fraction, decoder_usage_fraction)
         {
+            imp.encode_decode_usage.set_visible(true);
             imp.encode_decode_usage
                 .start_graph()
-                .push_data_point(encoder_usage);
+                .push_data_point((encoder_usage as f64) / 100.0);
             imp.encode_decode_usage
-                .set_start_subtitle(&format!("{} %", (encoder_usage * 100.0).round()));
+                .set_start_subtitle(&format!("{encoder_usage} %"));
             imp.encode_decode_usage
                 .end_graph()
-                .push_data_point(decoder_usage);
+                .push_data_point((decoder_usage as f64) / 100.0);
             imp.encode_decode_usage
-                .set_end_subtitle(&format!("{} %", (decoder_usage * 100.0).round()));
+                .set_end_subtitle(&format!("{decoder_usage} %"));
         } else {
             imp.encode_decode_usage.start_graph().push_data_point(0.0);
             imp.encode_decode_usage.set_start_subtitle(&i18n("N/A"));
             imp.encode_decode_usage.end_graph().push_data_point(0.0);
             imp.encode_decode_usage.set_end_subtitle(&i18n("N/A"));
-            imp.encode_decode_usage.set_graphs_visible(false);
+            imp.encode_decode_usage.set_visible(false);
         }
-
-        /*if let Ok(encoder_usage) = encoder_usage_fraction {
-            imp.encode_decode_usage
-                .start_graph()
-                .push_data_point(encoder_usage);
-            imp.encode_decode_usage
-                .set_start_subtitle(&format!("{} %", (encoder_usage * 100.0).round()));
-            imp.encode_decode_usage.start_graph().set_visible(true);
-        } else {
-            imp.encode_decode_usage.start_graph().push_data_point(0.0);
-            imp.encode_decode_usage.set_start_subtitle(&i18n("N/A"));
-            imp.encode_decode_usage.start_graph().set_visible(false);
-        }
-
-        let decoder_usage_fraction = gpu.decode_usage().await.map(|usage| (usage as f64) / 100.0);
-        if let Ok(encoder_usage) = decoder_usage_fraction {
-            imp.encode_decode_usage
-                .start_graph()
-                .push_data_point(encoder_usage);
-            imp.encode_decode_usage
-                .set_start_subtitle(&format!("{} %", (encoder_usage * 100.0).round()));
-            imp.encode_decode_usage.start_graph().set_visible(true);
-        } else {
-            imp.encode_decode_usage.graph().push_data_point(0.0);
-            imp.encode_decode_usage.set_subtitle(&i18n("N/A"));
-            imp.encode_decode_usage.graph().set_visible(false);
-        }*/
 
         let total_vram = gpu.total_vram().await;
         let used_vram = gpu.used_vram().await;
@@ -370,9 +347,15 @@ impl ResGPU {
                 .map_or_else(|_| i18n("N/A"), convert_power),
         );
 
-        self.set_property("usage", *gpu_usage_fraction.as_ref().unwrap_or(&0.0));
+        self.set_property(
+            "usage",
+            gpu_usage
+                .as_ref()
+                .map(|usage| (*usage as f64) / 100.0)
+                .unwrap_or(0.0),
+        );
 
-        if gpu_usage_fraction.is_err() && used_vram_fraction.is_none() {
+        if gpu_usage.is_err() && used_vram_fraction.is_none() {
             self.set_property("tab_subtitle", i18n("N/A"));
         } else {
             self.set_property(
