@@ -6,7 +6,7 @@ msgstr ""
 "Project-Id-Version: resources\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2022-12-25 15:51+0100\n"
-"PO-Revision-Date: 2023-10-26 23:45+0200\n"
+"PO-Revision-Date: 2023-10-28 00:34+0200\n"
 "Last-Translator: nokyan <nokyan@tuta.io>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -162,7 +162,7 @@ msgstr ""
 msgid "Memory"
 msgstr ""
 
-#: data/net.nokyan.Resources.metainfo.xml.in.in:26 src/ui/pages/gpu.rs:116
+#: data/net.nokyan.Resources.metainfo.xml.in.in:26 src/ui/pages/gpu.rs:122
 #: src/ui/window.rs:259
 msgid "GPU"
 msgstr ""
@@ -208,19 +208,20 @@ msgstr ""
 #: src/ui/dialogs/process_dialog.rs:147 src/ui/dialogs/process_dialog.rs:149
 #: src/ui/pages/cpu.rs:206 src/ui/pages/cpu.rs:218 src/ui/pages/cpu.rs:233
 #: src/ui/pages/cpu.rs:239 src/ui/pages/cpu.rs:245 src/ui/pages/cpu.rs:251
-#: src/ui/pages/cpu.rs:255 src/ui/pages/cpu.rs:258 src/ui/pages/cpu.rs:323
-#: src/ui/pages/drive.rs:204 src/ui/pages/gpu.rs:193 src/ui/pages/gpu.rs:209
-#: src/ui/pages/gpu.rs:229 src/ui/pages/gpu.rs:239 src/ui/pages/gpu.rs:261
-#: src/ui/pages/gpu.rs:269 src/ui/pages/gpu.rs:275 src/ui/pages/gpu.rs:282
-#: src/ui/pages/gpu.rs:289 src/ui/pages/gpu.rs:295 src/ui/pages/gpu.rs:301
-#: src/ui/pages/gpu.rs:307 src/ui/pages/memory.rs:199
-#: src/ui/pages/memory.rs:203 src/ui/pages/memory.rs:207
-#: src/ui/pages/memory.rs:264 src/ui/pages/network.rs:214
-#: src/ui/pages/network.rs:221 src/ui/pages/network.rs:227
-#: src/ui/pages/network.rs:233 src/ui/pages/network.rs:235
-#: src/ui/pages/processes/mod.rs:389 src/ui/pages/processes/mod.rs:424
-#: src/ui/pages/processes/mod.rs:453 src/ui/pages/processes/mod.rs:488
-#: src/utils/gpu.rs:82 src/utils/gpu.rs:85
+#: src/ui/pages/cpu.rs:255 src/ui/pages/cpu.rs:258 src/ui/pages/cpu.rs:327
+#: src/ui/pages/drive.rs:204 src/ui/pages/gpu.rs:215 src/ui/pages/gpu.rs:228
+#: src/ui/pages/gpu.rs:253 src/ui/pages/gpu.rs:255 src/ui/pages/gpu.rs:299
+#: src/ui/pages/gpu.rs:309 src/ui/pages/gpu.rs:331 src/ui/pages/gpu.rs:339
+#: src/ui/pages/gpu.rs:345 src/ui/pages/gpu.rs:352 src/ui/pages/gpu.rs:359
+#: src/ui/pages/gpu.rs:365 src/ui/pages/gpu.rs:371 src/ui/pages/gpu.rs:377
+#: src/ui/pages/memory.rs:199 src/ui/pages/memory.rs:203
+#: src/ui/pages/memory.rs:207 src/ui/pages/memory.rs:264
+#: src/ui/pages/network.rs:214 src/ui/pages/network.rs:221
+#: src/ui/pages/network.rs:227 src/ui/pages/network.rs:233
+#: src/ui/pages/network.rs:235 src/ui/pages/processes/mod.rs:389
+#: src/ui/pages/processes/mod.rs:424 src/ui/pages/processes/mod.rs:453
+#: src/ui/pages/processes/mod.rs:488 src/utils/gpu/mod.rs:192
+#: src/utils/gpu/mod.rs:196
 msgid "N/A"
 msgstr ""
 
@@ -354,19 +355,27 @@ msgstr ""
 
 #. Translators: This is an abbreviation for "Read" and "Write". This is displayed in the sidebar so your
 #. translation should preferably be quite short or an abbreviation
-#: src/ui/pages/drive.rs:308
+#: src/ui/pages/drive.rs:310
 msgid "R: {} · W: {}"
 msgstr ""
 
-#: src/ui/pages/gpu.rs:186
+#: src/ui/pages/gpu.rs:192
 msgid "GPU Usage"
 msgstr ""
 
-#: src/ui/pages/gpu.rs:189
+#: src/ui/pages/gpu.rs:196
+msgid "Video Encoder Usage"
+msgstr ""
+
+#: src/ui/pages/gpu.rs:204
+msgid "Video Decoder Usage"
+msgstr ""
+
+#: src/ui/pages/gpu.rs:211
 msgid "Video Memory Usage"
 msgstr ""
 
-#: src/ui/pages/gpu.rs:312
+#: src/ui/pages/gpu.rs:382
 msgid "{} · VRAM: {}"
 msgstr ""
 
@@ -1021,7 +1030,7 @@ msgstr ""
 #: data/resources/ui/dialogs/app_dialog.ui:130
 #: data/resources/ui/dialogs/process_dialog.ui:113
 #: data/resources/ui/pages/cpu.ui:91 data/resources/ui/pages/drive.ui:48
-#: data/resources/ui/pages/gpu.ui:74 data/resources/ui/pages/memory.ui:42
+#: data/resources/ui/pages/gpu.ui:77 data/resources/ui/pages/memory.ui:42
 #: data/resources/ui/pages/network.ui:51
 msgid "Properties"
 msgstr ""
@@ -1168,11 +1177,11 @@ msgstr ""
 msgid "Show Usages of Logical CPUs"
 msgstr ""
 
-#: data/resources/ui/pages/cpu.ui:77 data/resources/ui/pages/gpu.ui:60
+#: data/resources/ui/pages/cpu.ui:77 data/resources/ui/pages/gpu.ui:63
 msgid "Sensors"
 msgstr ""
 
-#: data/resources/ui/pages/cpu.ui:84 data/resources/ui/pages/gpu.ui:63
+#: data/resources/ui/pages/cpu.ui:84 data/resources/ui/pages/gpu.ui:66
 msgid "Temperature"
 msgstr ""
 
@@ -1228,35 +1237,35 @@ msgstr ""
 msgid "Removable"
 msgstr ""
 
-#: data/resources/ui/pages/gpu.ui:31
+#: data/resources/ui/pages/gpu.ui:34
 msgid "GPU Frequency"
 msgstr ""
 
-#: data/resources/ui/pages/gpu.ui:44
+#: data/resources/ui/pages/gpu.ui:47
 msgid "Video Memory Frequency"
 msgstr ""
 
-#: data/resources/ui/pages/gpu.ui:49
+#: data/resources/ui/pages/gpu.ui:52
 msgid "Power Usage"
 msgstr ""
 
-#: data/resources/ui/pages/gpu.ui:81 data/resources/ui/pages/network.ui:58
+#: data/resources/ui/pages/gpu.ui:84 data/resources/ui/pages/network.ui:58
 msgid "Manufacturer"
 msgstr ""
 
-#: data/resources/ui/pages/gpu.ui:90
+#: data/resources/ui/pages/gpu.ui:93
 msgid "PCI Slot"
 msgstr ""
 
-#: data/resources/ui/pages/gpu.ui:99 data/resources/ui/pages/network.ui:67
+#: data/resources/ui/pages/gpu.ui:102 data/resources/ui/pages/network.ui:67
 msgid "Driver Used"
 msgstr ""
 
-#: data/resources/ui/pages/gpu.ui:108
+#: data/resources/ui/pages/gpu.ui:111
 msgid "Current Power Cap"
 msgstr ""
 
-#: data/resources/ui/pages/gpu.ui:117
+#: data/resources/ui/pages/gpu.ui:120
 msgid "Max Power Cap"
 msgstr ""
 

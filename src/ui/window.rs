@@ -17,7 +17,7 @@ use crate::ui::pages::processes::ResProcesses;
 use crate::utils::app::AppsContext;
 use crate::utils::cpu;
 use crate::utils::drive::Drive;
-use crate::utils::gpu::GPU;
+use crate::utils::gpu::Gpu;
 use crate::utils::network::{InterfaceType, NetworkInterface};
 use crate::utils::process::ProcessAction;
 use crate::utils::settings::SETTINGS;
@@ -248,7 +248,7 @@ impl MainWindow {
                 imp.processor_window_title.set_subtitle(&i18n("Processor"));
             }
 
-            let gpus = GPU::get_gpus().await.unwrap_or_default();
+            let gpus = Gpu::get_gpus().await.unwrap_or_default();
             for (i, gpu) in gpus.iter().enumerate() {
                 let page = ResGPU::new();
                 page.init(gpu.clone(), i);
@@ -261,7 +261,7 @@ impl MainWindow {
 
                 page.set_tab_name(&*title);
 
-                let added_page = if let Ok(gpu_name) = gpu.get_name() {
+                let added_page = if let Ok(gpu_name) = gpu.name() {
                     this.add_page(&page, &title, &gpu_name, &title)
                 } else {
                     this.add_page(&page, &title, &title, "")
