@@ -332,6 +332,7 @@ impl Process {
                         ((new.gfx.saturating_sub(old.gfx) as f32)
                             / (new.gfx_timestamp.saturating_sub(old.gfx_timestamp) as f32))
                             .nan_default(0.0)
+                            / 1_000_000.0
                     }
                 })
                 .sum();
@@ -357,6 +358,7 @@ impl Process {
                         ((new.enc.saturating_sub(old.enc) as f32)
                             / (new.enc_timestamp.saturating_sub(old.enc_timestamp) as f32))
                             .nan_default(0.0)
+                            / 1_000_000.0
                     }
                 })
                 .sum();
@@ -382,6 +384,7 @@ impl Process {
                         ((new.dec.saturating_sub(old.dec) as f32)
                             / (new.dec_timestamp.saturating_sub(old.dec_timestamp) as f32))
                             .nan_default(0.0)
+                            / 1_000_000.0
                     }
                 })
                 .sum();

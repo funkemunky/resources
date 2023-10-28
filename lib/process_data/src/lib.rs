@@ -271,7 +271,6 @@ impl ProcessData {
         let fdinfo_path = proc_path.join("fdinfo");
         let mut dir = async_std::fs::read_dir(fdinfo_path).await?;
 
-        let mut client_ids = HashSet::new();
         let mut return_map = BTreeMap::new();
 
         while let Some(entry) = dir.next().await {
@@ -281,11 +280,26 @@ impl ProcessData {
                 if file_path.is_file().await {
                     let stats = Self::read_fdinfo(&file_path).await;
                     if let Ok(stats) = stats {
-                        if client_ids.contains(&stats.2) {
-                            continue;
-                        }
-                        client_ids.insert(stats.2);
-                        return_map.insert(stats.0, stats.1);
+                        return_map
+                            .entry(stats.0)
+                            .and_modify(|existing_value: &mut GpuUsageStats| {
+                                if stats.1.gfx > existing_value.gfx {
+                                    existing_value.gfx = stats.1.gfx;
+                                    existing_value.gfx_timestamp = stats.1.gfx_timestamp;
+                                }
+                                if stats.1.dec > existing_value.dec {
+                                    existing_value.dec = stats.1.dec;
+                                    existing_value.dec_timestamp = stats.1.dec_timestamp;
+                                }
+                                if stats.1.enc > existing_value.enc {
+                                    existing_value.enc = stats.1.enc;
+                                    existing_value.enc_timestamp = stats.1.enc_timestamp;
+                                }
+                                if stats.1.mem > existing_value.mem {
+                                    existing_value.mem = stats.1.mem;
+                                }
+                            })
+                            .or_insert(stats.1);
                     }
                 }
             }
@@ -305,7 +319,10 @@ impl ProcessData {
 
         if let (Some(pci_slot), Some(client_id)) = (
             object.get("drm-pdev").and_then(|obj| obj.as_str()),
-            object.get("drm-client-id").and_then(|obj| obj.as_i64()),
+            object
+                .get("drm-client-id")
+                .and_then(|obj| obj.as_str())
+                .and_then(|s| s.parse::<i64>().ok()),
         ) {
             let gfx = object
                 .get("drm-engine-gfx")
@@ -314,24 +331,24 @@ impl ProcessData {
                 .unwrap_or(0);
             let enc = object
                 .get("drm-engine-enc")
-                .and_then(|gfx| gfx.as_str())
-                .and_then(|gfx| gfx[0..(gfx.len() - 3)].parse::<u64>().ok())
+                .and_then(|enc| enc.as_str())
+                .and_then(|s| s[0..(s.len() - 3)].parse::<u64>().ok())
                 .unwrap_or(0);
             let dec = object
                 .get("drm-engine-dec")
-                .and_then(|gfx| gfx.as_str())
-                .and_then(|gfx| gfx[0..(gfx.len() - 3)].parse::<u64>().ok())
+                .and_then(|dec| dec.as_str())
+                .and_then(|s| s[0..(s.len() - 3)].parse::<u64>().ok())
                 .unwrap_or(0);
             let vram = object
-                .get("drm-engine-vram")
-                .and_then(|gfx| gfx.as_str())
-                .and_then(|gfx| gfx[0..(gfx.len() - 4)].parse::<u64>().ok())
+                .get("drm-memory-vram")
+                .and_then(|vram| vram.as_str())
+                .and_then(|s| s[0..(s.len() - 4)].parse::<u64>().ok())
                 .map(|bytes| bytes * 1024)
                 .unwrap_or(0);
             let gtt = object
-                .get("drm-engine-gtt")
-                .and_then(|gfx| gfx.as_str())
-                .and_then(|gfx| gfx[0..(gfx.len() - 4)].parse::<u64>().ok())
+                .get("drm-memory-gtt")
+                .and_then(|gtt| gtt.as_str())
+                .and_then(|s| s[0..(s.len() - 4)].parse::<u64>().ok())
                 .map(|bytes| bytes * 1024)
                 .unwrap_or(0);
             let stats = GpuUsageStats {
