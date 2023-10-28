@@ -6,7 +6,7 @@ msgstr ""
 "Project-Id-Version: resources\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2022-12-25 15:51+0100\n"
-"PO-Revision-Date: 2023-10-28 01:05+0200\n"
+"PO-Revision-Date: 2023-10-28 13:00+0200\n"
 "Last-Translator: nokyan <nokyan@tuta.io>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
@@ -210,10 +210,10 @@ msgstr ""
 #: src/ui/pages/cpu.rs:239 src/ui/pages/cpu.rs:245 src/ui/pages/cpu.rs:251
 #: src/ui/pages/cpu.rs:255 src/ui/pages/cpu.rs:258 src/ui/pages/cpu.rs:327
 #: src/ui/pages/drive.rs:204 src/ui/pages/gpu.rs:215 src/ui/pages/gpu.rs:228
-#: src/ui/pages/gpu.rs:254 src/ui/pages/gpu.rs:256 src/ui/pages/gpu.rs:270
-#: src/ui/pages/gpu.rs:282 src/ui/pages/gpu.rs:304 src/ui/pages/gpu.rs:312
-#: src/ui/pages/gpu.rs:318 src/ui/pages/gpu.rs:325 src/ui/pages/gpu.rs:332
-#: src/ui/pages/gpu.rs:338 src/ui/pages/gpu.rs:344 src/ui/pages/gpu.rs:350
+#: src/ui/pages/gpu.rs:257 src/ui/pages/gpu.rs:259 src/ui/pages/gpu.rs:273
+#: src/ui/pages/gpu.rs:285 src/ui/pages/gpu.rs:307 src/ui/pages/gpu.rs:315
+#: src/ui/pages/gpu.rs:321 src/ui/pages/gpu.rs:328 src/ui/pages/gpu.rs:335
+#: src/ui/pages/gpu.rs:341 src/ui/pages/gpu.rs:347 src/ui/pages/gpu.rs:359
 #: src/ui/pages/memory.rs:199 src/ui/pages/memory.rs:203
 #: src/ui/pages/memory.rs:207 src/ui/pages/memory.rs:264
 #: src/ui/pages/network.rs:214 src/ui/pages/network.rs:221
@@ -375,7 +375,7 @@ msgstr ""
 msgid "Video Memory Usage"
 msgstr ""
 
-#: src/ui/pages/gpu.rs:355
+#: src/ui/pages/gpu.rs:364
 msgid "{} · VRAM: {}"
 msgstr ""
 
@@ -393,7 +393,7 @@ msgstr ""
 msgid "{} / {} · Swap: {} %"
 msgstr ""
 
-#: src/ui/pages/network.rs:116 src/ui/window.rs:398
+#: src/ui/pages/network.rs:116 src/ui/window.rs:400
 msgid "Network Interface"
 msgstr ""
 
@@ -449,147 +449,147 @@ msgstr ""
 msgid "GPU {}"
 msgstr ""
 
-#: src/ui/window.rs:388
+#: src/ui/window.rs:390
 msgid "Bluetooth Tether"
 msgstr ""
 
-#: src/ui/window.rs:389
+#: src/ui/window.rs:391
 msgid "Network Bridge"
 msgstr ""
 
-#: src/ui/window.rs:390
+#: src/ui/window.rs:392
 msgid "Ethernet Connection"
 msgstr ""
 
-#: src/ui/window.rs:391
+#: src/ui/window.rs:393
 msgid "InfiniBand Connection"
 msgstr ""
 
-#: src/ui/window.rs:392
+#: src/ui/window.rs:394
 msgid "Serial Line IP Connection"
 msgstr ""
 
-#: src/ui/window.rs:393
+#: src/ui/window.rs:395
 msgid "Virtual Ethernet Device"
 msgstr ""
 
-#: src/ui/window.rs:394
+#: src/ui/window.rs:396
 msgid "VM Network Bridge"
 msgstr ""
 
-#: src/ui/window.rs:395
+#: src/ui/window.rs:397
 msgid "VPN Tunnel (WireGuard)"
 msgstr ""
 
-#: src/ui/window.rs:396
+#: src/ui/window.rs:398
 msgid "Wi-Fi Connection"
 msgstr ""
 
-#: src/ui/window.rs:397
+#: src/ui/window.rs:399
 msgid "WWAN Connection"
 msgstr ""
 
-#: src/ui/window.rs:557
+#: src/ui/window.rs:559
 msgid "End {}?"
 msgstr ""
 
-#: src/ui/window.rs:558
+#: src/ui/window.rs:560
 msgid "Halt {}?"
 msgstr ""
 
-#: src/ui/window.rs:559
+#: src/ui/window.rs:561
 msgid "Kill {}?"
 msgstr ""
 
-#: src/ui/window.rs:560
+#: src/ui/window.rs:562
 msgid "Continue {}?"
 msgstr ""
 
-#: src/ui/window.rs:566
+#: src/ui/window.rs:568
 msgid "Unsaved work might be lost."
 msgstr ""
 
-#: src/ui/window.rs:567
+#: src/ui/window.rs:569
 msgid ""
 "Halting an application can come with serious risks such as losing data and "
 "security implications. Use with caution."
 msgstr ""
 
-#: src/ui/window.rs:568
+#: src/ui/window.rs:570
 msgid ""
 "Killing an application can come with serious risks such as losing data and "
 "security implications. Use with caution."
 msgstr ""
 
-#: src/ui/window.rs:575
+#: src/ui/window.rs:577
 msgid "End application"
 msgstr ""
 
-#: src/ui/window.rs:576
+#: src/ui/window.rs:578
 msgid "Halt application"
 msgstr ""
 
-#: src/ui/window.rs:577
+#: src/ui/window.rs:579
 msgid "Kill application"
 msgstr ""
 
-#: src/ui/window.rs:578
+#: src/ui/window.rs:580
 msgid "Continue application"
 msgstr ""
 
-#: src/ui/window.rs:584
+#: src/ui/window.rs:586
 msgid "Successfully ended {}"
 msgstr ""
 
-#: src/ui/window.rs:585
+#: src/ui/window.rs:587
 msgid "Successfully halted {}"
 msgstr ""
 
-#: src/ui/window.rs:586
+#: src/ui/window.rs:588
 msgid "Successfully killed {}"
 msgstr ""
 
-#: src/ui/window.rs:587
+#: src/ui/window.rs:589
 msgid "Successfully continued {}"
 msgstr ""
 
-#: src/ui/window.rs:594
+#: src/ui/window.rs:596
 msgid "There was a problem ending a process"
 msgid_plural "There were problems ending {} processes"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/ui/window.rs:600
+#: src/ui/window.rs:602
 msgid "There was a problem halting a process"
 msgid_plural "There were problems halting {} processes"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/ui/window.rs:606
+#: src/ui/window.rs:608
 msgid "There was a problem killing a process"
 msgid_plural "There were problems killing {} processes"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/ui/window.rs:612
+#: src/ui/window.rs:614
 msgid "There was a problem continuing a process"
 msgid_plural "There were problems continuing {} processes"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/ui/window.rs:622
+#: src/ui/window.rs:624
 msgid "There was a problem ending {}"
 msgstr ""
 
-#: src/ui/window.rs:623
+#: src/ui/window.rs:625
 msgid "There was a problem halting {}"
 msgstr ""
 
-#: src/ui/window.rs:624
+#: src/ui/window.rs:626
 msgid "There was a problem killing {}"
 msgstr ""
 
-#: src/ui/window.rs:625
+#: src/ui/window.rs:627
 msgid "There was a problem continuing {}"
 msgstr ""
 

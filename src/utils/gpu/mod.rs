@@ -22,7 +22,7 @@ const VID_AMD: u16 = 4098;
 const VID_INTEL: u16 = 32902;
 const VID_NVIDIA: u16 = 4318;
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub enum Gpu {
     Amd(AmdGpu),
     Nvidia(NvidiaGpu),

@@ -15,7 +15,7 @@ use super::GpuImpl;
 
 static NVML: Lazy<Result<Nvml, NvmlError>> = Lazy::new(Nvml::init);
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Default)]
 
 pub struct NvidiaGpu {
     pub device: Option<&'static Device>,
@@ -23,6 +23,7 @@ pub struct NvidiaGpu {
     pub driver: String,
     sysfs_path: PathBuf,
     first_hwmon_path: Option<PathBuf>,
+    nvml_device: Option<nvml_wrapper::Device<'static>>,
 }
 
 impl NvidiaGpu {
@@ -34,6 +35,7 @@ impl NvidiaGpu {
         first_hwmon_path: Option<PathBuf>,
     ) -> Self {
         Self {
+            nvml_device: Self::nvml_device(&pci_slot).ok(),
             device,
             pci_slot,
             driver,
@@ -42,11 +44,11 @@ impl NvidiaGpu {
         }
     }
 
-    fn nvml_device(&self) -> Result<nvml_wrapper::Device> {
+    fn nvml_device<S: AsRef<str>>(pci_slot: S) -> Result<nvml_wrapper::Device<'static>> {
         NVML.as_ref()
             .context("unable to establish NVML connection")
             .and_then(|nvml| {
-                nvml.device_by_pci_bus_id(self.pci_slot.as_str())
+                nvml.device_by_pci_bus_id(pci_slot.as_ref())
                     .context("failed to get GPU through NVML with PCI slot")
             })
     }
@@ -76,7 +78,9 @@ impl GpuImpl for NvidiaGpu {
 
     fn name(&self) -> Result<String> {
         let nvml_answer = self
-            .nvml_device()
+            .nvml_device
+            .as_ref()
+            .context("no NVML device")
             .and_then(|dev| dev.name().context("unable to get name through NVML"));
 
         if let Ok(name) = nvml_answer {
@@ -87,10 +91,14 @@ impl GpuImpl for NvidiaGpu {
     }
 
     async fn usage(&self) -> Result<isize> {
-        let nvml_answer = self.nvml_device().and_then(|dev| {
-            dev.utilization_rates()
-                .context("unable to get utilization rates through NVML")
-        });
+        let nvml_answer = self
+            .nvml_device
+            .as_ref()
+            .context("no NVML device")
+            .and_then(|dev| {
+                dev.utilization_rates()
+                    .context("unable to get utilization rates through NVML")
+            });
 
         if let Ok(rates) = nvml_answer {
             Ok(rates.gpu as isize)
@@ -100,10 +108,14 @@ impl GpuImpl for NvidiaGpu {
     }
 
     async fn encode_usage(&self) -> Result<isize> {
-        let nvml_answer = self.nvml_device().and_then(|dev| {
-            dev.encoder_utilization()
-                .context("unable to get utilization rates through NVML")
-        });
+        let nvml_answer = self
+            .nvml_device
+            .as_ref()
+            .context("no NVML device")
+            .and_then(|dev| {
+                dev.encoder_utilization()
+                    .context("unable to get utilization rates through NVML")
+            });
 
         if let Ok(rates) = nvml_answer {
             Ok(rates.utilization as isize)
@@ -113,10 +125,14 @@ impl GpuImpl for NvidiaGpu {
     }
 
     async fn decode_usage(&self) -> Result<isize> {
-        let nvml_answer = self.nvml_device().and_then(|dev| {
-            dev.decoder_utilization()
-                .context("unable to get utilization rates through NVML")
-        });
+        let nvml_answer = self
+            .nvml_device
+            .as_ref()
+            .context("no NVML device")
+            .and_then(|dev| {
+                dev.decoder_utilization()
+                    .context("unable to get utilization rates through NVML")
+            });
 
         if let Ok(rates) = nvml_answer {
             Ok(rates.utilization as isize)
@@ -126,10 +142,14 @@ impl GpuImpl for NvidiaGpu {
     }
 
     async fn used_vram(&self) -> Result<isize> {
-        let nvml_answer = self.nvml_device().and_then(|dev| {
-            dev.memory_info()
-                .context("unable to get memory info through NVML")
-        });
+        let nvml_answer = self
+            .nvml_device
+            .as_ref()
+            .context("no NVML device")
+            .and_then(|dev| {
+                dev.memory_info()
+                    .context("unable to get memory info through NVML")
+            });
 
         if let Ok(memory) = nvml_answer {
             Ok(memory.used as isize)
@@ -139,10 +159,14 @@ impl GpuImpl for NvidiaGpu {
     }
 
     async fn total_vram(&self) -> Result<isize> {
-        let nvml_answer = self.nvml_device().and_then(|dev| {
-            dev.memory_info()
-                .context("unable to get memory info through NVML")
-        });
+        let nvml_answer = self
+            .nvml_device
+            .as_ref()
+            .context("no NVML device")
+            .and_then(|dev| {
+                dev.memory_info()
+                    .context("unable to get memory info through NVML")
+            });
 
         if let Ok(rates) = nvml_answer {
             Ok(rates.total as isize)
@@ -152,10 +176,14 @@ impl GpuImpl for NvidiaGpu {
     }
 
     async fn temperature(&self) -> Result<f64> {
-        let nvml_answer = self.nvml_device().and_then(|dev| {
-            dev.temperature(TemperatureSensor::Gpu)
-                .context("unable to get temperatures through NVML")
-        });
+        let nvml_answer = self
+            .nvml_device
+            .as_ref()
+            .context("no NVML device")
+            .and_then(|dev| {
+                dev.temperature(TemperatureSensor::Gpu)
+                    .context("unable to get temperatures through NVML")
+            });
 
         if let Ok(temp) = nvml_answer {
             Ok(temp as f64)
@@ -165,10 +193,14 @@ impl GpuImpl for NvidiaGpu {
     }
 
     async fn power_usage(&self) -> Result<f64> {
-        let nvml_answer = self.nvml_device().and_then(|dev| {
-            dev.power_usage()
-                .context("unable to get temperatures through NVML")
-        });
+        let nvml_answer = self
+            .nvml_device
+            .as_ref()
+            .context("no NVML device")
+            .and_then(|dev| {
+                dev.power_usage()
+                    .context("unable to get temperatures through NVML")
+            });
 
         if let Ok(power_usage) = nvml_answer {
             Ok((power_usage as f64) / 1000.0)
@@ -178,10 +210,14 @@ impl GpuImpl for NvidiaGpu {
     }
 
     async fn core_frequency(&self) -> Result<f64> {
-        let nvml_answer = self.nvml_device().and_then(|dev| {
-            dev.clock_info(Clock::Graphics)
-                .context("unable to get temperatures through NVML")
-        });
+        let nvml_answer = self
+            .nvml_device
+            .as_ref()
+            .context("no NVML device")
+            .and_then(|dev| {
+                dev.clock_info(Clock::Graphics)
+                    .context("unable to get temperatures through NVML")
+            });
 
         if let Ok(frequency) = nvml_answer {
             Ok((frequency as f64) * 1_000_000.0)
@@ -191,10 +227,14 @@ impl GpuImpl for NvidiaGpu {
     }
 
     async fn vram_frequency(&self) -> Result<f64> {
-        let nvml_answer = self.nvml_device().and_then(|dev| {
-            dev.clock_info(Clock::Memory)
-                .context("unable to get temperatures through NVML")
-        });
+        let nvml_answer = self
+            .nvml_device
+            .as_ref()
+            .context("no NVML device")
+            .and_then(|dev| {
+                dev.clock_info(Clock::Memory)
+                    .context("unable to get temperatures through NVML")
+            });
 
         if let Ok(frequency) = nvml_answer {
             Ok((frequency as f64) * 1_000_000.0)
@@ -204,10 +244,14 @@ impl GpuImpl for NvidiaGpu {
     }
 
     async fn power_cap(&self) -> Result<f64> {
-        let nvml_answer = self.nvml_device().and_then(|dev| {
-            dev.power_management_limit()
-                .context("unable to get temperatures through NVML")
-        });
+        let nvml_answer = self
+            .nvml_device
+            .as_ref()
+            .context("no NVML device")
+            .and_then(|dev| {
+                dev.power_management_limit()
+                    .context("unable to get temperatures through NVML")
+            });
 
         if let Ok(cap) = nvml_answer {
             Ok((cap as f64) / 1000.0)
@@ -217,10 +261,14 @@ impl GpuImpl for NvidiaGpu {
     }
 
     async fn power_cap_max(&self) -> Result<f64> {
-        let nvml_answer = self.nvml_device().and_then(|dev| {
-            dev.power_management_limit_constraints()
-                .context("unable to get temperatures through NVML")
-        });
+        let nvml_answer = self
+            .nvml_device
+            .as_ref()
+            .context("no NVML device")
+            .and_then(|dev| {
+                dev.power_management_limit_constraints()
+                    .context("unable to get temperatures through NVML")
+            });
 
         if let Ok(constraints) = nvml_answer {
             Ok((constraints.max_limit as f64) / 1000.0)

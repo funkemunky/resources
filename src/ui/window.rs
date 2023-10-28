@@ -248,12 +248,12 @@ impl MainWindow {
                 imp.processor_window_title.set_subtitle(&i18n("Processor"));
             }
 
-            let gpus = Gpu::get_gpus().await.unwrap_or_default();
-            for (i, gpu) in gpus.iter().enumerate() {
+            let mut gpus = Gpu::get_gpus().await.unwrap_or_default();
+            let gpus_len = gpus.len();
+            for (i, gpu) in gpus.drain(..).enumerate() {
                 let page = ResGPU::new();
-                page.init(gpu.clone(), i);
 
-                let title = if gpus.len() > 1 {
+                let title = if gpus_len > 1 {
                     i18n_f("GPU {}", &[&i.to_string()])
                 } else {
                     i18n("GPU")
@@ -266,6 +266,8 @@ impl MainWindow {
                 } else {
                     this.add_page(&page, &title, &title, "")
                 };
+
+                page.init(gpu, i);
 
                 imp.gpu_pages.borrow_mut().push(added_page);
             }
