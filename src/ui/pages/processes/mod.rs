@@ -853,6 +853,7 @@ impl ResProcesses {
         gpu_col_factory.connect_setup(move |_factory, item| {
             let item = item.downcast_ref::<gtk::ListItem>().unwrap();
             let row = gtk::Inscription::new(None);
+            row.set_min_chars(7);
             item.set_child(Some(&row));
             item.property_expression("item")
                 .chain_property::<ProcessEntry>("gpu_usage")
