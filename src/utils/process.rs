@@ -1,7 +1,9 @@
 use anyhow::{bail, Context, Result};
 use config::LIBEXECDIR;
 use glob::glob;
+use process_data::GpuUsageStats;
 use process_data::{Containerization, ProcessData};
+use std::collections::BTreeMap;
 use std::process::Command;
 
 use async_std::sync::Arc;
@@ -10,6 +12,7 @@ use futures_util::future::join_all;
 use gtk::gio::{Icon, ThemedIcon};
 
 use crate::config;
+use crate::utils::NaNDefault;
 
 use super::{FLATPAK_APP_PATH, FLATPAK_SPAWN, IS_FLATPAK};
 
@@ -26,6 +29,7 @@ pub struct Process {
     pub read_bytes_last_timestamp: Option<u64>,
     pub write_bytes_last: Option<u64>,
     pub write_bytes_last_timestamp: Option<u64>,
+    pub gpu_usage_stats_last: BTreeMap<String, GpuUsageStats>,
 }
 
 // TODO: Better name?
@@ -52,6 +56,10 @@ pub struct ProcessItem {
     pub read_total: Option<u64>,
     pub write_speed: Option<f64>,
     pub write_total: Option<u64>,
+    pub gpu_usage: f32,
+    pub enc_usage: f32,
+    pub dec_usage: f32,
+    pub gpu_mem_usage: u64,
 }
 
 impl Process {
@@ -135,6 +143,7 @@ impl Process {
             read_bytes_last_timestamp,
             write_bytes_last,
             write_bytes_last_timestamp,
+            gpu_usage_stats_last: Default::default(),
         }
     }
 
@@ -303,6 +312,90 @@ impl Process {
         } else {
             None
         }
+    }
+
+    #[must_use]
+    pub fn gpu_usage(&self) -> f32 {
+        if self.gpu_usage_stats_last.is_empty() {
+            0.0
+        } else {
+            let gpus = self.data.gpu_usage_stats.len() as f32;
+            let usage_delta: f32 = self
+                .data
+                .gpu_usage_stats
+                .values()
+                .zip(self.gpu_usage_stats_last.values())
+                .map(|(new, old)| {
+                    if new.nvidia {
+                        new.gfx as f32 / 100.0
+                    } else {
+                        ((new.gfx.saturating_sub(old.gfx) as f32)
+                            / (new.gfx_timestamp.saturating_sub(old.gfx_timestamp) as f32))
+                            .nan_default(0.0)
+                    }
+                })
+                .sum();
+            (usage_delta / gpus).nan_default(0.0)
+        }
+    }
+
+    #[must_use]
+    pub fn enc_usage(&self) -> f32 {
+        if self.gpu_usage_stats_last.is_empty() {
+            0.0
+        } else {
+            let gpus = self.data.gpu_usage_stats.len() as f32;
+            let usage_delta: f32 = self
+                .data
+                .gpu_usage_stats
+                .values()
+                .zip(self.gpu_usage_stats_last.values())
+                .map(|(new, old)| {
+                    if new.nvidia {
+                        new.enc as f32 / 100.0
+                    } else {
+                        ((new.enc.saturating_sub(old.enc) as f32)
+                            / (new.enc_timestamp.saturating_sub(old.enc_timestamp) as f32))
+                            .nan_default(0.0)
+                    }
+                })
+                .sum();
+            (usage_delta / gpus).nan_default(0.0)
+        }
+    }
+
+    #[must_use]
+    pub fn dec_usage(&self) -> f32 {
+        if self.gpu_usage_stats_last.is_empty() {
+            0.0
+        } else {
+            let gpus = self.data.gpu_usage_stats.len() as f32;
+            let usage_delta: f32 = self
+                .data
+                .gpu_usage_stats
+                .values()
+                .zip(self.gpu_usage_stats_last.values())
+                .map(|(new, old)| {
+                    if new.nvidia {
+                        new.dec as f32 / 100.0
+                    } else {
+                        ((new.dec.saturating_sub(old.dec) as f32)
+                            / (new.dec_timestamp.saturating_sub(old.dec_timestamp) as f32))
+                            .nan_default(0.0)
+                    }
+                })
+                .sum();
+            (usage_delta / gpus).nan_default(0.0)
+        }
+    }
+
+    #[must_use]
+    pub fn gpu_mem_usage(&self) -> u64 {
+        self.data
+            .gpu_usage_stats
+            .values()
+            .map(|stats| stats.mem)
+            .sum()
     }
 
     pub fn sanitize_cmdline<S: AsRef<str>>(cmdline: S) -> Option<String> {

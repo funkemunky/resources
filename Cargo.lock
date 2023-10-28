@@ -1507,6 +1507,7 @@ dependencies = [
  "async-std",
  "glob",
  "nparse",
+ "nvml-wrapper",
  "once_cell",
  "regex",
  "rmp-serde",

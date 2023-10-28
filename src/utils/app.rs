@@ -59,6 +59,10 @@ pub struct AppItem {
     pub read_total: u64,
     pub write_speed: f64,
     pub write_total: u64,
+    pub gpu_usage: f32,
+    pub enc_usage: f32,
+    pub dec_usage: f32,
+    pub gpu_mem_usage: u64,
 }
 
 /// Represents an application installed on the system. It doesn't
@@ -206,6 +210,26 @@ impl App {
         )
     }
 
+    #[must_use]
+    pub fn gpu_usage(&self, apps: &AppsContext) -> f32 {
+        self.processes_iter(apps).map(Process::gpu_usage).sum()
+    }
+
+    #[must_use]
+    pub fn enc_usage(&self, apps: &AppsContext) -> f32 {
+        self.processes_iter(apps).map(Process::enc_usage).sum()
+    }
+
+    #[must_use]
+    pub fn dec_usage(&self, apps: &AppsContext) -> f32 {
+        self.processes_iter(apps).map(Process::dec_usage).sum()
+    }
+
+    #[must_use]
+    pub fn gpu_mem_usage(&self, apps: &AppsContext) -> u64 {
+        self.processes_iter(apps).map(Process::gpu_mem_usage).sum()
+    }
+
     pub fn execute_process_action(
         &self,
         apps: &AppsContext,
@@ -319,13 +343,17 @@ impl AppsContext {
                 cpu_time_ratio: process.cpu_time_ratio(),
                 commandline: Process::sanitize_cmdline(process.data.commandline.clone())
                     .unwrap_or(full_comm),
-                containerization: process.data.containerization.clone(),
+                containerization: process.data.containerization,
                 cgroup: process.data.cgroup.clone(),
                 uid: process.data.uid,
                 read_speed: process.read_speed(),
                 read_total: process.data.read_bytes,
                 write_speed: process.write_speed(),
                 write_total: process.data.write_bytes,
+                gpu_usage: process.gpu_usage(),
+                enc_usage: process.enc_usage(),
+                dec_usage: process.dec_usage(),
+                gpu_mem_usage: process.gpu_mem_usage(),
             }
         })
     }
@@ -373,6 +401,10 @@ impl AppsContext {
                         read_total: app.read_total(self),
                         write_speed: app.write_speed(self),
                         write_total: app.write_total(self),
+                        gpu_usage: app.gpu_usage(self),
+                        enc_usage: app.enc_usage(self),
+                        dec_usage: app.dec_usage(self),
+                        gpu_mem_usage: app.gpu_mem_usage(self),
                     },
                 )
             })
@@ -410,6 +442,17 @@ impl AppsContext {
                 .filter_map(|process| process.data.write_bytes)
                 .sum::<u64>();
 
+        let system_gpu_usage = self.system_processes_iter().map(Process::gpu_usage).sum();
+
+        let system_enc_usage = self.system_processes_iter().map(Process::enc_usage).sum();
+
+        let system_dec_usage = self.system_processes_iter().map(Process::dec_usage).sum();
+
+        let system_gpu_mem_usage = self
+            .system_processes_iter()
+            .map(Process::gpu_mem_usage)
+            .sum();
+
         return_map.insert(
             None,
             AppItem {
@@ -425,6 +468,10 @@ impl AppsContext {
                 read_total: system_read_total,
                 write_speed: system_write_speed,
                 write_total: system_write_total,
+                gpu_usage: system_gpu_usage,
+                enc_usage: system_enc_usage,
+                dec_usage: system_dec_usage,
+                gpu_mem_usage: system_gpu_mem_usage,
             },
         );
         return_map
@@ -445,7 +492,8 @@ impl AppsContext {
                 old_process.read_bytes_last_timestamp = old_process.data.read_bytes_timestamp;
                 old_process.write_bytes_last = old_process.data.write_bytes;
                 old_process.write_bytes_last_timestamp = old_process.data.write_bytes_timestamp;
-                old_process.data = new_process.data.clone();
+                old_process.gpu_usage_stats_last = old_process.data.gpu_usage_stats.clone();
+                old_process.data = new_process.data;
             } else {
                 // this is a new process, see if it belongs to a graphical app
 

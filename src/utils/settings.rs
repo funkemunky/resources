@@ -509,6 +509,130 @@ impl Settings {
             f(settings.boolean("show-logical-cpus"));
         })
     }
+
+    pub fn processes_show_gpu(&self) -> bool {
+        self.boolean("processes-show-gpu")
+    }
+
+    pub fn set_processes_show_gpu(&self, value: bool) -> Result<(), glib::error::BoolError> {
+        self.set_boolean("processes-show-gpu", value)
+    }
+
+    pub fn connect_processes_show_gpu<F: Fn(bool) + 'static>(&self, f: F) -> glib::SignalHandlerId {
+        self.connect_changed(Some("processes-show-gpu"), move |settings, _key| {
+            f(settings.boolean("processes-show-gpu"));
+        })
+    }
+
+    pub fn processes_show_encoder(&self) -> bool {
+        self.boolean("processes-show-encoder")
+    }
+
+    pub fn set_processes_show_encoder(&self, value: bool) -> Result<(), glib::error::BoolError> {
+        self.set_boolean("processes-show-encoder", value)
+    }
+
+    pub fn connect_processes_show_encoder<F: Fn(bool) + 'static>(
+        &self,
+        f: F,
+    ) -> glib::SignalHandlerId {
+        self.connect_changed(Some("processes-show-encoder"), move |settings, _key| {
+            f(settings.boolean("processes-show-encoder"));
+        })
+    }
+
+    pub fn processes_show_decoder(&self) -> bool {
+        self.boolean("processes-show-decoder")
+    }
+
+    pub fn set_processes_show_decoder(&self, value: bool) -> Result<(), glib::error::BoolError> {
+        self.set_boolean("processes-show-decoder", value)
+    }
+
+    pub fn connect_processes_show_decoder<F: Fn(bool) + 'static>(
+        &self,
+        f: F,
+    ) -> glib::SignalHandlerId {
+        self.connect_changed(Some("processes-show-decoder"), move |settings, _key| {
+            f(settings.boolean("processes-show-decoder"));
+        })
+    }
+
+    pub fn processes_show_gpu_memory(&self) -> bool {
+        self.boolean("processes-show-gpu-memory")
+    }
+
+    pub fn set_processes_show_gpu_memory(&self, value: bool) -> Result<(), glib::error::BoolError> {
+        self.set_boolean("processes-show-gpu-memory", value)
+    }
+
+    pub fn connect_processes_show_gpu_memory<F: Fn(bool) + 'static>(
+        &self,
+        f: F,
+    ) -> glib::SignalHandlerId {
+        self.connect_changed(Some("processes-show-gpu-memory"), move |settings, _key| {
+            f(settings.boolean("processes-show-gpu-memory"));
+        })
+    }
+
+    pub fn apps_show_gpu(&self) -> bool {
+        self.boolean("apps-show-gpu")
+    }
+
+    pub fn set_apps_show_gpu(&self, value: bool) -> Result<(), glib::error::BoolError> {
+        self.set_boolean("apps-show-gpu", value)
+    }
+
+    pub fn connect_apps_show_gpu<F: Fn(bool) + 'static>(&self, f: F) -> glib::SignalHandlerId {
+        self.connect_changed(Some("apps-show-gpu"), move |settings, _key| {
+            f(settings.boolean("apps-show-gpu"));
+        })
+    }
+
+    pub fn apps_show_encoder(&self) -> bool {
+        self.boolean("apps-show-encoder")
+    }
+
+    pub fn set_apps_show_encoder(&self, value: bool) -> Result<(), glib::error::BoolError> {
+        self.set_boolean("apps-show-encoder", value)
+    }
+
+    pub fn connect_apps_show_encoder<F: Fn(bool) + 'static>(&self, f: F) -> glib::SignalHandlerId {
+        self.connect_changed(Some("apps-show-encoder"), move |settings, _key| {
+            f(settings.boolean("apps-show-encoder"));
+        })
+    }
+
+    pub fn apps_show_decoder(&self) -> bool {
+        self.boolean("apps-show-decoder")
+    }
+
+    pub fn set_apps_show_decoder(&self, value: bool) -> Result<(), glib::error::BoolError> {
+        self.set_boolean("apps-show-decoder", value)
+    }
+
+    pub fn connect_apps_show_decoder<F: Fn(bool) + 'static>(&self, f: F) -> glib::SignalHandlerId {
+        self.connect_changed(Some("apps-show-decoder"), move |settings, _key| {
+            f(settings.boolean("apps-show-decoder"));
+        })
+    }
+
+    pub fn apps_show_gpu_memory(&self) -> bool {
+        self.boolean("apps-show-gpu-memory")
+    }
+
+    pub fn set_apps_show_gpu_memory(&self, value: bool) -> Result<(), glib::error::BoolError> {
+        self.set_boolean("apps-show-gpu-memory", value)
+    }
+
+    pub fn connect_apps_show_gpu_memory<F: Fn(bool) + 'static>(
+        &self,
+        f: F,
+    ) -> glib::SignalHandlerId {
+        self.connect_changed(Some("apps-show-gpu-memory"), move |settings, _key| {
+            f(settings.boolean("apps-show-gpu-memory"));
+        })
+    }
 }
 
 impl Deref for Settings {
