@@ -58,4 +58,8 @@
     <release version="1.0.1" date="2023-10-09"/>
     <release version="1.0.0" date="2023-10-08"/>
   </releases>
+  <custom>
+    <value key="Purism::form_factor">workstation</value>
+    <value key="Purism::form_factor">mobile</value>
+  </custom>
 </component>
