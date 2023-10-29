@@ -5,11 +5,7 @@ use nvml_wrapper::{enums::device::UsedGpuMemory, error::NvmlError, Device, Nvml}
 use once_cell::sync::Lazy;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
-use std::{
-    collections::{BTreeMap, HashSet},
-    path::PathBuf,
-    time::SystemTime,
-};
+use std::{collections::BTreeMap, path::PathBuf, time::SystemTime};
 
 static PAGESIZE: Lazy<usize> = Lazy::new(sysconf::pagesize);
 
@@ -385,7 +381,8 @@ impl ProcessData {
             .map(|pci_info| pci_info.bus_id)?
             .to_lowercase();
 
-        let usage_stats = gpu.process_utilization_stats(None)?;
+        let usage_stats =
+            gpu.process_utilization_stats(Self::unix_as_millis() * 1000 - 8_000_000)?;
         let mut comp_gfx_stats = gpu.running_graphics_processes()?;
         comp_gfx_stats.extend(gpu.running_compute_processes()?);
 

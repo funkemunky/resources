@@ -6,7 +6,7 @@ use hashbrown::{HashMap, HashSet};
 use once_cell::sync::Lazy;
 use process_data::Containerization;
 
-use crate::i18n::i18n;
+use crate::{i18n::i18n, utils::NaNDefault};
 
 use super::process::{Process, ProcessAction, ProcessItem};
 
@@ -258,6 +258,48 @@ impl AppsContext {
             read_bytes_from_dead_processes: 0,
             write_bytes_from_dead_processes: 0,
         }
+    }
+
+    pub fn encoder_fraction<S: AsRef<str>>(&self, pci_id: S) -> f32 {
+        self.all_processes()
+            .map(|process| (&process.data.gpu_usage_stats, &process.gpu_usage_stats_last))
+            .map(|(new, old)| (new.get(pci_id.as_ref()), old.get(pci_id.as_ref())))
+            .filter_map(|(a, b)| match (a, b) {
+                (Some(val1), Some(val2)) => Some((val1, val2)),
+                _ => None,
+            })
+            .map(|(new, old)| {
+                if new.nvidia {
+                    new.enc as f32 / 100.0
+                } else {
+                    ((new.enc.saturating_sub(old.enc) as f32)
+                        / (new.enc_timestamp.saturating_sub(old.enc_timestamp) as f32))
+                        .nan_default(0.0)
+                        / 1_000_000.0
+                }
+            })
+            .sum()
+    }
+
+    pub fn decoder_fraction<S: AsRef<str>>(&self, pci_id: S) -> f32 {
+        self.all_processes()
+            .map(|process| (&process.data.gpu_usage_stats, &process.gpu_usage_stats_last))
+            .map(|(new, old)| (new.get(pci_id.as_ref()), old.get(pci_id.as_ref())))
+            .filter_map(|(a, b)| match (a, b) {
+                (Some(val1), Some(val2)) => Some((val1, val2)),
+                _ => None,
+            })
+            .map(|(new, old)| {
+                if new.nvidia {
+                    new.dec as f32 / 100.0
+                } else {
+                    ((new.dec.saturating_sub(old.dec) as f32)
+                        / (new.dec_timestamp.saturating_sub(old.dec_timestamp) as f32))
+                        .nan_default(0.0)
+                        / 1_000_000.0
+                }
+            })
+            .sum()
     }
 
     fn app_associated_with_process(&mut self, process: &Process) -> Option<String> {

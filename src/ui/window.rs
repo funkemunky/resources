@@ -1,6 +1,6 @@
 use hashbrown::HashMap;
 use std::path::PathBuf;
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 use adw::{prelude::*, subclass::prelude::*};
 use adw::{Toast, ToastOverlay};
@@ -17,7 +17,7 @@ use crate::ui::pages::processes::ResProcesses;
 use crate::utils::app::AppsContext;
 use crate::utils::cpu;
 use crate::utils::drive::Drive;
-use crate::utils::gpu::Gpu;
+use crate::utils::gpu::{Gpu, GpuImpl};
 use crate::utils::network::{InterfaceType, NetworkInterface};
 use crate::utils::process::ProcessAction;
 use crate::utils::settings::SETTINGS;
@@ -47,7 +47,7 @@ mod imp {
 
     use super::*;
 
-    use async_std::sync::Mutex;
+    use async_std::sync::RwLock;
     use gtk::{
         glib::{Receiver, Sender},
         CompositeTemplate,
@@ -85,9 +85,9 @@ mod imp {
 
         pub network_pages: RefCell<HashMap<PathBuf, (bool, adw::ToolbarView)>>,
 
-        pub gpu_pages: RefCell<Vec<adw::ToolbarView>>,
+        pub gpu_pages: RefCell<HashMap<String, (Gpu, adw::ToolbarView)>>,
 
-        pub apps_context: Mutex<AppsContext>,
+        pub apps_context: RwLock<AppsContext>,
 
         pub sender: Sender<Action>,
         pub receiver: RefCell<Option<Receiver<Action>>>,
@@ -234,7 +234,7 @@ impl MainWindow {
             let imp = this.imp();
 
             {
-                *imp.apps_context.lock().await = AppsContext::new();
+                *imp.apps_context.write().await = AppsContext::new();
             }
 
             let cpu_info = cpu::cpu_info()
@@ -267,9 +267,9 @@ impl MainWindow {
                     this.add_page(&page, &title, &title, "")
                 };
 
-                page.init(gpu, i);
+                page.init(&gpu, i);
 
-                imp.gpu_pages.borrow_mut().push(added_page);
+                imp.gpu_pages.borrow_mut().insert(gpu.pci_slot().clone(), (gpu, added_page));
             }
 
             let _ = this.refresh_drives().await;
@@ -279,11 +279,25 @@ impl MainWindow {
                 loop {
                     let _ = imp.cpu.refresh_page().await;
 
-                    let _ = imp.memory.refresh_page();
+                    let _ = imp.memory.refresh_page().await;
 
                     if let Ok(gpu_pages) = imp.gpu_pages.try_borrow() {
-                        for gpu_page_toolbar in gpu_pages.iter() {
-                            let _ = gpu_page_toolbar.content().and_downcast::<ResGPU>().unwrap().refresh_page().await;
+                        for (pci_id, (gpu, gpu_page_toolbar)) in gpu_pages.iter() {
+                            // if our GPU is not nvidia, we have to collect encoder and decoder stats through AppContext
+                            // because encoder and decoder stats for non-nvidia GPUs can only be collected through
+                            // processes
+                            let (encoder_fraction, decoder_fraction) = match gpu {
+                                Gpu::Nvidia(nvidia) => (
+                                    nvidia.encode_usage().await.ok().map(|usage| usage as f32 / 100.0),
+                                    nvidia.decode_usage().await.ok().map(|usage| usage as f32 / 100.0)
+                                ),
+                                _ => {
+                                    (   Some(imp.apps_context.read().await.encoder_fraction(pci_id)),
+                                        Some(imp.apps_context.read().await.decoder_fraction(pci_id))
+                                    )
+                                },
+                            };
+                            let _ = gpu_page_toolbar.content().and_downcast::<ResGPU>().unwrap().refresh_page(gpu, encoder_fraction, decoder_fraction).await;
                         }
                     }
 
@@ -305,14 +319,17 @@ impl MainWindow {
                 }
             }, async {
                 loop {
+                    let start = Instant::now();
                     {
-                        let mut apps_context = imp.apps_context.lock().await;
+                        let mut apps_context = imp.apps_context.write().await;
                         apps_context.refresh().await;
                         imp.applications.refresh_apps_list(&apps_context);
                         imp.processes.refresh_processes_list(&apps_context);
                     }
+                    let duration = start.elapsed();
+                    let interval = SETTINGS.refresh_speed().process_refresh_interval();
 
-                    timeout_future(Duration::from_secs_f32(SETTINGS.refresh_speed().process_refresh_interval())).await;
+                    timeout_future(Duration::from_secs_f32((interval - duration.as_secs_f32()).clamp(interval / 4.0, interval))).await;
                 }
             })
         }));
@@ -440,7 +457,7 @@ impl MainWindow {
         let main_context = MainContext::default();
         main_context.spawn_local(clone!(@strong self as this => async move {
             let imp = this.imp();
-            let apps_context = imp.apps_context.lock().await;
+            let apps_context = imp.apps_context.read().await;
             match action {
                 Action::ManipulateProcess(action, pid, display_name, toast_overlay) => {
                     if let Some(process) = apps_context.get_process(pid) {

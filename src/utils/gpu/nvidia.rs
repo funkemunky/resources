@@ -1,19 +1,14 @@
 use anyhow::{bail, Context, Result};
 use async_trait::async_trait;
-use nvml_wrapper::{
-    enum_wrappers::device::{Clock, TemperatureSensor},
-    error::NvmlError,
-    Nvml,
-};
-use once_cell::sync::Lazy;
+use nvml_wrapper::enum_wrappers::device::{Clock, TemperatureSensor};
 
 use std::path::PathBuf;
 
 use pci_ids::Device;
 
-use super::GpuImpl;
+use crate::utils::NVML;
 
-static NVML: Lazy<Result<Nvml, NvmlError>> = Lazy::new(Nvml::init);
+use super::GpuImpl;
 
 #[derive(Debug, Default)]
 

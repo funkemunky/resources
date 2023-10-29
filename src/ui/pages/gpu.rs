@@ -1,5 +1,5 @@
 use adw::{prelude::*, subclass::prelude::*};
-use anyhow::{Context, Result};
+use anyhow::Result;
 use gtk::glib::{self};
 
 use crate::config::PROFILE;
@@ -14,10 +14,7 @@ mod imp {
         sync::OnceLock,
     };
 
-    use crate::{
-        ui::widgets::{double_graph_box::ResDoubleGraphBox, graph_box::ResGraphBox},
-        utils::gpu::Gpu,
-    };
+    use crate::ui::widgets::{double_graph_box::ResDoubleGraphBox, graph_box::ResGraphBox};
 
     use super::*;
 
@@ -56,7 +53,6 @@ mod imp {
         #[template_child]
         pub max_power_cap: TemplateChild<adw::ActionRow>,
 
-        pub gpu: OnceLock<Gpu>,
         pub number: OnceLock<usize>,
 
         #[property(get)]
@@ -114,7 +110,6 @@ mod imp {
                 driver_used: Default::default(),
                 current_power_cap: Default::default(),
                 max_power_cap: Default::default(),
-                gpu: Default::default(),
                 number: Default::default(),
                 uses_progress_bar: Cell::new(true),
                 icon: RefCell::new(ThemedIcon::new("gpu-symbolic").into()),
@@ -179,16 +174,14 @@ impl ResGPU {
         glib::Object::new::<Self>()
     }
 
-    pub fn init(&self, gpu: Gpu, number: usize) {
+    pub fn init(&self, gpu: &Gpu, number: usize) {
         let imp = self.imp();
-        imp.gpu.set(gpu).unwrap_or_default();
         imp.number.set(number).unwrap_or_default();
-        self.setup_widgets();
+        self.setup_widgets(gpu);
     }
 
-    pub fn setup_widgets(&self) {
+    pub fn setup_widgets(&self, gpu: &Gpu) {
         let imp = self.imp();
-        let gpu = &imp.gpu.get().unwrap();
         imp.gpu_usage.set_title_label(&i18n("GPU Usage"));
         imp.gpu_usage.graph().set_data_points_max_amount(60);
         imp.gpu_usage.graph().set_graph_color(230, 97, 0);
@@ -217,9 +210,13 @@ impl ResGPU {
         imp.driver_used.set_subtitle(&gpu.driver());
     }
 
-    pub async fn refresh_page(&self) -> Result<()> {
+    pub async fn refresh_page(
+        &self,
+        gpu: &Gpu,
+        encoder_fraction: Option<f32>,
+        decoder_fraction: Option<f32>,
+    ) -> Result<()> {
         let imp = self.imp();
-        let gpu = imp.gpu.get().with_context(|| "GPU not initialized")?;
 
         let gpu_usage = gpu.usage().await;
         let usage_percentage_string = gpu_usage
@@ -236,22 +233,20 @@ impl ResGPU {
         );
         imp.gpu_usage.graph().set_visible(true);
 
-        let encoder_usage_fraction = gpu.encode_usage().await;
-        let decoder_usage_fraction = gpu.decode_usage().await;
-        if let (Ok(encoder_usage), Ok(decoder_usage)) =
-            (encoder_usage_fraction, decoder_usage_fraction)
+        if let (Some(encoder_fraction), Some(decoder_fraction)) =
+            (encoder_fraction, decoder_fraction)
         {
             imp.encode_decode_usage.set_visible(true);
             imp.encode_decode_usage
                 .start_graph()
-                .push_data_point((encoder_usage as f64) / 100.0);
+                .push_data_point(encoder_fraction.into());
             imp.encode_decode_usage
-                .set_start_subtitle(&format!("{encoder_usage} %"));
+                .set_start_subtitle(&format!("{} %", (encoder_fraction * 100.0).round()));
             imp.encode_decode_usage
                 .end_graph()
-                .push_data_point((decoder_usage as f64) / 100.0);
+                .push_data_point(decoder_fraction.into());
             imp.encode_decode_usage
-                .set_end_subtitle(&format!("{decoder_usage} %"));
+                .set_end_subtitle(&format!("{} %", (decoder_fraction * 100.0).round()));
         } else {
             imp.encode_decode_usage.start_graph().push_data_point(0.0);
             imp.encode_decode_usage.set_start_subtitle(&i18n("N/A"));

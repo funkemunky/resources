@@ -226,22 +226,26 @@ impl ResMemory {
             }));
     }
 
-    pub fn refresh_page(&self) -> Result<()> {
+    pub async fn refresh_page(&self) -> Result<()> {
         let imp = self.imp();
 
         let total_mem = get_total_memory()
-            .with_context(|| "unable to get total memory")
+            .await
+            .context("unable to get total memory")
             .unwrap_or_default();
         let available_mem = get_available_memory()
-            .with_context(|| "unable to get available memory")
+            .await
+            .context("unable to get available memory")
             .unwrap_or_default();
         let used_mem = total_mem.saturating_sub(available_mem);
 
         let total_swap = get_total_swap()
-            .with_context(|| "unable to get total swap")
+            .await
+            .context("unable to get total swap")
             .unwrap_or_default();
         let free_swap = get_free_swap()
-            .with_context(|| "unable to get free swap")
+            .await
+            .context("unable to get free swap")
             .unwrap_or_default();
         let used_swap = total_swap.saturating_sub(free_swap);
 

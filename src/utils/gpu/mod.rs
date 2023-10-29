@@ -37,7 +37,7 @@ impl Default for Gpu {
 }
 
 #[async_trait]
-trait GpuImpl {
+pub trait GpuImpl {
     fn device(&self) -> Option<&'static Device>;
     fn pci_slot(&self) -> String;
     fn driver(&self) -> String;
