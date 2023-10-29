@@ -1,11 +1,20 @@
 use anyhow::{anyhow, bail, Context, Result};
 use async_std::{stream::StreamExt, sync::Arc};
 use nparse::KVStrToJson;
-use nvml_wrapper::{enums::device::UsedGpuMemory, error::NvmlError, Device, Nvml};
+use nvml_wrapper::{
+    enums::device::UsedGpuMemory,
+    error::NvmlError,
+    struct_wrappers::device::{ProcessInfo, ProcessUtilizationSample},
+    Device, Nvml,
+};
 use once_cell::sync::Lazy;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
-use std::{collections::BTreeMap, path::PathBuf, time::SystemTime};
+use std::{
+    collections::{BTreeMap, HashMap},
+    path::PathBuf,
+    time::SystemTime,
+};
 
 static PAGESIZE: Lazy<usize> = Lazy::new(sysconf::pagesize);
 
@@ -13,19 +22,50 @@ static UID_REGEX: Lazy<Regex> = Lazy::new(|| Regex::new(r"Uid:\s*(\d+)").unwrap(
 
 static NVML: Lazy<Result<Nvml, NvmlError>> = Lazy::new(Nvml::init);
 
-static NVML_DEVICES: Lazy<Vec<Device>> = Lazy::new(|| {
+static NVML_DEVICES: Lazy<Vec<(String, Device)>> = Lazy::new(|| {
     if let Ok(nvml) = NVML.as_ref() {
         let device_count = nvml.device_count().unwrap_or(0);
         let mut return_vec = Vec::new();
         for i in 0..device_count {
-            if let Ok(device) = nvml.device_by_index(i) {
-                return_vec.push(device);
+            if let Ok(gpu) = nvml.device_by_index(i) {
+                if let Ok(pci_slot) = gpu.pci_info().map(|pci_info| pci_info.bus_id) {
+                    let pci_slot = pci_slot.to_lowercase()[4..pci_slot.len()].to_owned();
+                    return_vec.push((pci_slot, gpu));
+                }
             }
         }
         return_vec
     } else {
         Vec::new()
     }
+});
+
+static NVIDIA_PROCESSES_STATS: Lazy<HashMap<String, Vec<ProcessUtilizationSample>>> =
+    Lazy::new(|| {
+        let mut return_map = HashMap::new();
+
+        for (pci_slot, gpu) in NVML_DEVICES.iter() {
+            return_map.insert(
+                pci_slot.to_owned(),
+                gpu.process_utilization_stats(ProcessData::unix_as_millis() * 1000 - 5_000_000)
+                    .unwrap_or_default(),
+            );
+        }
+
+        return_map
+    });
+
+static NVIDIA_PROCESS_INFOS: Lazy<HashMap<String, Vec<ProcessInfo>>> = Lazy::new(|| {
+    let mut return_map = HashMap::new();
+
+    for (pci_slot, gpu) in NVML_DEVICES.iter() {
+        let mut comp_gfx_stats = gpu.running_graphics_processes().unwrap_or_default();
+        comp_gfx_stats.extend(gpu.running_compute_processes().unwrap_or_default());
+
+        return_map.insert(pci_slot.to_owned(), comp_gfx_stats);
+    }
+
+    return_map
 });
 
 #[derive(Debug, Clone, Default, Hash, PartialEq, Eq, Serialize, Deserialize, Copy)]
@@ -247,7 +287,7 @@ impl ProcessData {
         })
     }
 
-    fn unix_as_millis() -> u64 {
+    pub fn unix_as_millis() -> u64 {
         SystemTime::now()
             .duration_since(SystemTime::UNIX_EPOCH)
             .unwrap()
@@ -366,49 +406,47 @@ impl ProcessData {
     fn nvidia_gpu_usage_stats(pid: i32) -> Result<BTreeMap<String, GpuUsageStats>> {
         let mut return_map = BTreeMap::new();
 
-        for gpu in NVML_DEVICES.iter() {
-            if let Ok(stats) = Self::read_nvidia_gpu_stats(pid, gpu) {
-                return_map.insert(stats.0, stats.1);
-            }
+        for (pci_slot, _) in NVML_DEVICES.iter() {
+            return_map.insert(
+                pci_slot.to_owned(),
+                Self::read_nvidia_gpu_stats(pid, &pci_slot)?,
+            );
         }
 
         Ok(return_map)
     }
 
-    fn read_nvidia_gpu_stats(pid: i32, gpu: &Device) -> Result<(String, GpuUsageStats)> {
-        let pci_slot = gpu
-            .pci_info()
-            .map(|pci_info| pci_info.bus_id)?
-            .to_lowercase();
-
-        let usage_stats =
-            gpu.process_utilization_stats(Self::unix_as_millis() * 1000 - 8_000_000)?;
-        let mut comp_gfx_stats = gpu.running_graphics_processes()?;
-        comp_gfx_stats.extend(gpu.running_compute_processes()?);
-
-        let this_process_stats = usage_stats.iter().find(|process| process.pid == pid as u32);
-        let this_process_mem_stats = comp_gfx_stats
+    fn read_nvidia_gpu_stats<S: AsRef<str>>(pid: i32, pci_slot: S) -> Result<GpuUsageStats> {
+        // layout: (gfx_usage, enc_usage, dec_usage)
+        let this_process_stats = NVIDIA_PROCESSES_STATS
+            .get(pci_slot.as_ref())
+            .context("couldn't find GPU with this PCI slot")?
             .iter()
-            .find(|process| process.pid == pid as u32)
+            .filter(|process| process.pid == pid as u32)
+            .map(|stats| (stats.sm_util, stats.enc_util, stats.dec_util))
+            .reduce(|acc, curr| (acc.0 + curr.0, acc.1 + curr.1, acc.2 + curr.2));
+
+        let this_process_mem_stats: u64 = NVIDIA_PROCESS_INFOS
+            .get(pci_slot.as_ref())
+            .context("couldn't find GPU with this PCI slot")?
+            .iter()
+            .filter(|process| process.pid == pid as u32)
             .map(|stats| match stats.used_gpu_memory {
                 UsedGpuMemory::Unavailable => 0,
                 UsedGpuMemory::Used(bytes) => bytes,
-            });
+            })
+            .sum();
 
-        if let Some(process_stats) = this_process_stats {
-            let gpu_stats = GpuUsageStats {
-                gfx: process_stats.sm_util as u64,
-                gfx_timestamp: Self::unix_as_millis(),
-                mem: this_process_mem_stats.unwrap_or(0),
-                enc: process_stats.enc_util as u64,
-                enc_timestamp: Self::unix_as_millis(),
-                dec: process_stats.dec_util as u64,
-                dec_timestamp: Self::unix_as_millis(),
-                nvidia: true,
-            };
-            Ok((pci_slot[4..pci_slot.len()].to_owned(), gpu_stats))
-        } else {
-            bail!("no stats found")
-        }
+        let gpu_stats = GpuUsageStats {
+            gfx: this_process_stats.unwrap_or_default().0 as u64,
+            gfx_timestamp: Self::unix_as_millis(),
+            mem: this_process_mem_stats,
+            enc: this_process_stats.unwrap_or_default().1 as u64,
+            enc_timestamp: Self::unix_as_millis(),
+            dec: this_process_stats.unwrap_or_default().2 as u64,
+            dec_timestamp: Self::unix_as_millis(),
+            nvidia: true,
+        };
+        Ok(gpu_stats)
     }
 }
