@@ -1,5 +1,9 @@
 use anyhow::{anyhow, bail, Context, Result};
-use async_std::{stream::StreamExt, sync::Arc};
+use async_std::{
+    stream::StreamExt,
+    sync::{Arc, Mutex},
+};
+use futures_util::future::join_all;
 use nparse::KVStrToJson;
 use nvml_wrapper::{
     enums::device::UsedGpuMemory,
@@ -309,39 +313,53 @@ impl ProcessData {
         let fdinfo_path = proc_path.join("fdinfo");
         let mut dir = async_std::fs::read_dir(fdinfo_path).await?;
 
-        let mut return_map = BTreeMap::new();
+        let return_map = Arc::new(Mutex::new(BTreeMap::new()));
+
+        let mut handles = Vec::new();
 
         while let Some(entry) = dir.next().await {
             if let Ok(entry) = entry {
                 let file_path = entry.path();
 
                 if file_path.is_file().await {
-                    let stats = Self::read_fdinfo(&file_path).await;
-                    if let Ok(stats) = stats {
-                        return_map
-                            .entry(stats.0)
-                            .and_modify(|existing_value: &mut GpuUsageStats| {
-                                if stats.1.gfx > existing_value.gfx {
-                                    existing_value.gfx = stats.1.gfx;
-                                    existing_value.gfx_timestamp = stats.1.gfx_timestamp;
-                                }
-                                if stats.1.dec > existing_value.dec {
-                                    existing_value.dec = stats.1.dec;
-                                    existing_value.dec_timestamp = stats.1.dec_timestamp;
-                                }
-                                if stats.1.enc > existing_value.enc {
-                                    existing_value.enc = stats.1.enc;
-                                    existing_value.enc_timestamp = stats.1.enc_timestamp;
-                                }
-                                if stats.1.mem > existing_value.mem {
-                                    existing_value.mem = stats.1.mem;
-                                }
-                            })
-                            .or_insert(stats.1);
-                    }
+                    let return_map = Arc::clone(&return_map);
+
+                    let handle = async_std::task::spawn(async move {
+                        let stats = Self::read_fdinfo(&file_path).await;
+                        if let Ok(stats) = stats {
+                            return_map
+                                .lock()
+                                .await
+                                .entry(stats.0)
+                                .and_modify(|existing_value: &mut GpuUsageStats| {
+                                    if stats.1.gfx > existing_value.gfx {
+                                        existing_value.gfx = stats.1.gfx;
+                                        existing_value.gfx_timestamp = stats.1.gfx_timestamp;
+                                    }
+                                    if stats.1.dec > existing_value.dec {
+                                        existing_value.dec = stats.1.dec;
+                                        existing_value.dec_timestamp = stats.1.dec_timestamp;
+                                    }
+                                    if stats.1.enc > existing_value.enc {
+                                        existing_value.enc = stats.1.enc;
+                                        existing_value.enc_timestamp = stats.1.enc_timestamp;
+                                    }
+                                    if stats.1.mem > existing_value.mem {
+                                        existing_value.mem = stats.1.mem;
+                                    }
+                                })
+                                .or_insert(stats.1);
+                        }
+                    });
+
+                    handles.push(handle);
                 }
             }
         }
+
+        join_all(handles).await;
+
+        let return_map = Arc::into_inner(return_map).unwrap().into_inner();
 
         Ok(return_map)
     }

@@ -25,3 +25,4 @@ serde = { version = "1.0.180", features = ["serde_derive"] }
 nparse = "0.0.10"
 libc = "0.2.149"
 nvml-wrapper = "0.9.0"
+futures-util = "0.3.28"
