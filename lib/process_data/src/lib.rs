@@ -12,6 +12,7 @@ use regex::Regex;
 use serde::{Deserialize, Serialize};
 use std::{
     collections::{BTreeMap, HashMap},
+    os::linux::fs::MetadataExt,
     path::PathBuf,
     time::SystemTime,
 };
@@ -106,6 +107,7 @@ pub struct ProcessData {
     pub read_bytes_timestamp: Option<u64>,
     pub write_bytes: Option<u64>,
     pub write_bytes_timestamp: Option<u64>,
+    /// Key: PCI Slot ID of the GPU
     pub gpu_usage_stats: BTreeMap<String, GpuUsageStats>,
 }
 
@@ -347,6 +349,16 @@ impl ProcessData {
     async fn read_fdinfo(
         fdinfo_path: &async_std::path::PathBuf,
     ) -> Result<(String, GpuUsageStats, i64)> {
+        let metadata = async_std::fs::metadata(&fdinfo_path).await?;
+        let major = unsafe { libc::major(metadata.st_rdev()) };
+        let (s_ifmt, s_ifchr) = (libc::S_IFMT, libc::S_IFCHR);
+
+        // Adapted from nvtop's `is_drm_fd()`
+        // https://github.com/Syllo/nvtop/blob/master/src/extract_processinfo_fdinfo.c
+        if metadata.st_mode() & s_ifmt == s_ifchr && major != 226 {
+            bail!("not a DRM file")
+        }
+
         let kv = async_std::fs::read_to_string(fdinfo_path)
             .await?
             .kv_str_to_json()
@@ -365,28 +377,33 @@ impl ProcessData {
                 .and_then(|gfx| gfx.as_str())
                 .and_then(|gfx| gfx[0..(gfx.len() - 3)].parse::<u64>().ok())
                 .unwrap_or(0);
+
             let enc = object
                 .get("drm-engine-enc")
                 .and_then(|enc| enc.as_str())
                 .and_then(|s| s[0..(s.len() - 3)].parse::<u64>().ok())
                 .unwrap_or(0);
+
             let dec = object
                 .get("drm-engine-dec")
                 .and_then(|dec| dec.as_str())
                 .and_then(|s| s[0..(s.len() - 3)].parse::<u64>().ok())
                 .unwrap_or(0);
+
             let vram = object
                 .get("drm-memory-vram")
                 .and_then(|vram| vram.as_str())
                 .and_then(|s| s[0..(s.len() - 4)].parse::<u64>().ok())
                 .map(|bytes| bytes * 1024)
                 .unwrap_or(0);
+
             let gtt = object
                 .get("drm-memory-gtt")
                 .and_then(|gtt| gtt.as_str())
                 .and_then(|s| s[0..(s.len() - 4)].parse::<u64>().ok())
                 .map(|bytes| bytes * 1024)
                 .unwrap_or(0);
+
             let stats = GpuUsageStats {
                 gfx,
                 gfx_timestamp: Self::unix_as_millis(),
@@ -397,6 +414,7 @@ impl ProcessData {
                 dec_timestamp: Self::unix_as_millis(),
                 nvidia: false,
             };
+
             return Ok((pci_slot.to_string(), stats, client_id));
         }
 
