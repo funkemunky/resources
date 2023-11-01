@@ -2,10 +2,9 @@ use anyhow::{bail, Context, Result};
 use config::LIBEXECDIR;
 use glob::glob;
 use process_data::{Containerization, ProcessData};
-use std::process::Command;
+use std::{process::Command, sync::Arc};
+use tokio::sync::Mutex;
 
-use async_std::sync::Arc;
-use async_std::sync::Mutex;
 use futures_util::future::join_all;
 use gtk::gio::{Icon, ThemedIcon};
 
@@ -63,11 +62,11 @@ impl Process {
     /// parsing procfs
     pub async fn all() -> Result<Vec<Self>> {
         if *IS_FLATPAK {
-            let proxy_path = format!(
+            /*let proxy_path = format!(
                 "{}/libexec/resources/resources-processes",
                 FLATPAK_APP_PATH.as_str()
             );
-            let command = async_process::Command::new(FLATPAK_SPAWN)
+            let command = tokio::process::Command::new(FLATPAK_SPAWN)
                 .args(["--host", proxy_path.as_str()])
                 .output()
                 .await?;
@@ -76,7 +75,8 @@ impl Process {
             return Ok(rmp_serde::from_slice::<Vec<ProcessData>>(&output)?
                 .drain(..)
                 .map(Self::from_process_data)
-                .collect());
+                .collect());*/
+            return Ok(Vec::new());
         } else {
             let vec: Arc<Mutex<Vec<ProcessData>>> = Arc::new(Mutex::new(Vec::new()));
 
@@ -84,7 +84,7 @@ impl Process {
             for entry in glob("/proc/[0-9]*/").context("unable to glob")?.flatten() {
                 let vec = Arc::clone(&vec);
 
-                let handle = async_std::task::spawn(async move {
+                let handle = tokio::task::spawn(async move {
                     if let Ok(process_data) = ProcessData::try_from_path(entry).await {
                         vec.lock().await.push(process_data);
                     }

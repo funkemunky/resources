@@ -47,11 +47,11 @@ mod imp {
 
     use super::*;
 
-    use async_std::sync::Mutex;
     use gtk::{
         glib::{Receiver, Sender},
         CompositeTemplate,
     };
+    use tokio::sync::Mutex;
 
     #[derive(Debug, CompositeTemplate)]
     #[template(resource = "/net/nokyan/Resources/ui/window.ui")]

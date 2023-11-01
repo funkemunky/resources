@@ -1,11 +1,12 @@
+use std::sync::Arc;
+
 use anyhow::{Context, Result};
-use async_std::sync::Arc;
-use async_std::sync::Mutex;
 use futures_util::future::join_all;
 use glob::glob;
 use process_data::ProcessData;
+use tokio::sync::Mutex;
 
-#[async_std::main]
+#[tokio::main]
 async fn main() -> Result<()> {
     let return_vec = Arc::new(Mutex::new(Vec::new()));
 
@@ -13,7 +14,7 @@ async fn main() -> Result<()> {
     for entry in glob("/proc/[0-9]*/").context("unable to glob")?.flatten() {
         let return_vec = Arc::clone(&return_vec);
 
-        let handle = async_std::task::spawn(async move {
+        let handle = tokio::task::spawn(async move {
             if let Ok(process_data) = ProcessData::try_from_path(entry).await {
                 return_vec.lock().await.push(process_data);
             }
