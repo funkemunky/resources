@@ -196,8 +196,16 @@ impl Settings {
         RefreshSpeed::from_str(self.string("refresh-speed").as_str()).unwrap_or_default()
     }
 
+    pub fn check_for_gpu(&self) -> bool {
+        self.boolean("check-for-gpu")
+    }
+
     pub fn set_refresh_speed(&self, value: RefreshSpeed) -> Result<(), glib::error::BoolError> {
         self.set_string("refresh-speed", &value.to_string())
+    }
+
+    pub fn set_check_for_gpu(&self, value: bool) -> Result<(), glib::error::BoolError> {
+        self.set_boolean("check-for-gpu", value)
     }
 
     pub fn connect_refresh_speed<F: Fn(RefreshSpeed) + 'static>(

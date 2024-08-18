@@ -349,7 +349,9 @@ impl MainWindow {
         }
         self.imp().cpu.init(cpu_info);
 
-        self.init_gpu_pages();
+        if SETTINGS.check_for_gpu() {
+            self.init_gpu_pages();
+        }
 
         let main_context = MainContext::default();
 

@@ -25,6 +25,8 @@ mod imp {
         #[template_child]
         pub refresh_speed_combo_row: TemplateChild<adw::ComboRow>,
         #[template_child]
+        pub check_gpu: TemplateChild<adw::SwitchRow>,
+        #[template_child]
         pub show_graph_grids_row: TemplateChild<adw::SwitchRow>,
         #[template_child]
         pub graph_data_points_row: TemplateChild<adw::SpinRow>,
@@ -169,6 +171,7 @@ impl ResSettingsDialog {
 
         imp.refresh_speed_combo_row
             .set_selected((SETTINGS.refresh_speed() as u8) as u32);
+        imp.check_gpu.set_active(SETTINGS.check_for_gpu());
         imp.show_graph_grids_row
             .set_active(SETTINGS.show_graph_grids());
         imp.graph_data_points_row
@@ -272,6 +275,10 @@ impl ResSettingsDialog {
                     let _ = SETTINGS.set_refresh_speed(refresh_speed);
                 }
             });
+
+        imp.check_gpu.connect_active_notify(|switch_row| {
+            let _ = SETTINGS.set_check_for_gpu(switch_row.is_active());
+        });
 
         imp.show_graph_grids_row
             .connect_active_notify(|switch_row| {

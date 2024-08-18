@@ -25,6 +25,11 @@
       <default>&quot;Normal&quot;</default>
       <summary>Refresh Speed</summary>
     </key>
+    <key name="check-for-gpu" type="b">
+      <default>false</default>
+      <summary>Check for GPU</summary>
+      <description>Enable or disable GPU checking.</description>
+    </key>
     <key name="show-search-on-start" type="b">
       <default>false</default>
       <summary>Show search field for Processes and Applications on launch</summary>
